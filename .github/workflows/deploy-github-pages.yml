@@ -38,7 +38,7 @@ jobs:
           cd voicevox
           sed -i 's/"executionEnabled": true,/"executionEnabled": false,/' .env.production
           sed -i 's!"host": "http://127.0.0.1:50021"!"host": "${{ secrets.Host }}"!' .env.production
-          npm run browser:build
+          npm run browser:build -- --base=/${GITHUB_REPOSITORY#${GITHUB_REPOSITORY_OWNER}/}/
       - name: Setup Pages
         uses: actions/configure-pages@v4
       - name: Upload artifact
