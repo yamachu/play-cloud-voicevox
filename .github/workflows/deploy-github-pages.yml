@@ -1,0 +1,50 @@
+name: Deploy Vite project with GitHub Pages
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+  actions: read
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  build-and-deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: ./voicevox/.node-version
+          cache: 'npm'
+          cache-dependency-path: ./voicevox/package-lock.json
+      - name: Install dependencies
+        run: |
+          cd voicevox
+          npm ci
+      - name: Build
+        run: |
+          cd voicevox
+          sed -i 's/"executionEnabled": true,/"executionEnabled": false,/' .env.production
+          sed -i 's!"host": "http://127.0.0.1:50021"!"host": "${{ secrets.Host }}"!' .env.production
+          npm run browser:build
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./voicevox/dist
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
